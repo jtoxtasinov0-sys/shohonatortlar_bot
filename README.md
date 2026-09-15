@@ -149,7 +149,7 @@ npm run dev
 | Mini App (brauzerda test) | http://localhost:5173 |
 | **Admin panel** | http://localhost:5174 |
 
-Admin panel paroli: `shohona2026` (`backend/.env` dagi `ADMIN_PASSWORD`).
+Admin panel paroli: `backend/.env` faylidagi `ADMIN_PASSWORD` qiymati.
 
 ---
 
@@ -284,7 +284,7 @@ Buyurtmalar sahifasi har **10 soniyada** avtomatik yangilanadi.
 → Backend (port 5000) ishlab turganini tekshiring. `npm run db:seed` bajarilganmi?
 
 **Admin panelga kira olmayapman**
-→ Parol: `backend/.env` dagi `ADMIN_PASSWORD` (standart: `shohona2026`).
+→ Parol: `backend/.env` dagi `ADMIN_PASSWORD` qiymati.
 
 **Rasmlar ko'rinmayapti**
 → Seed'dagi rasmlar internetdan olinadi. O'z rasmlaringizni admin panel → Mahsulotlar → ✏️ → «Rasm havolasi» orqali qo'ying.
