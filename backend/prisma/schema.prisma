@@ -1,0 +1,132 @@
+// Shohona Tortlar — ma'lumotlar bazasi sxemasi
+// PostgreSQL (Neon) + Prisma ORM
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  // Ilova ishlashi uchun (Neon pooler)
+  url      = env("DATABASE_URL")
+  // Migratsiyalar uchun to'g'ridan-to'g'ri ulanish
+  directUrl = env("DIRECT_URL")
+}
+
+// ---------------------------------------------------------------
+// Mijozlar (Telegram foydalanuvchilari)
+// ---------------------------------------------------------------
+model User {
+  id         Int      @id @default(autoincrement())
+  telegramId String   @unique
+  firstName  String?
+  lastName   String?
+  username   String?
+  phone      String?
+  language   String   @default("uz") // "uz" | "ru"
+  isBlocked  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  orders Order[]
+
+  @@map("users")
+}
+
+// ---------------------------------------------------------------
+// Kategoriyalar (Tortlar, Kapkeyklar, Pechenye, ...)
+// ---------------------------------------------------------------
+model Category {
+  id        Int      @id @default(autoincrement())
+  slug      String   @unique
+  nameUz    String
+  nameRu    String
+  emoji     String   @default("🍰")
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  products Product[]
+
+  @@map("categories")
+}
+
+// ---------------------------------------------------------------
+// Mahsulotlar
+// ---------------------------------------------------------------
+model Product {
+  id            Int      @id @default(autoincrement())
+  nameUz        String
+  nameRu        String
+  descriptionUz String   @default("")
+  descriptionRu String   @default("")
+  ingredientsUz String[] @default([])
+  ingredientsRu String[] @default([])
+  imageUrl      String   @default("")
+  price         Int // joriy narx (so'm)
+  oldPrice      Int? // eski narx (chizilgan holda ko'rsatiladi)
+  unit          String   @default("dona") // "dona" | "kg" | "to'plam"
+  weightOptions Json? // [{ "label": "1 kg", "multiplier": 1 }, ...]
+  allowText     Boolean  @default(false) // tort ustiga yozuv yozish mumkinmi
+  isPopular     Boolean  @default(false)
+  isUpsell      Boolean  @default(false) // savatchada "qo'shimcha taklif" sifatida chiqadi
+  isActive      Boolean  @default(true)
+  sortOrder     Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  categoryId Int
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@index([categoryId])
+  @@map("products")
+}
+
+// ---------------------------------------------------------------
+// Buyurtmalar
+// ---------------------------------------------------------------
+model Order {
+  id           Int      @id @default(autoincrement())
+  items        Json // [{ productId, nameUz, nameRu, imageUrl, option, unitPrice, qty, inscription }]
+  subtotal     Int      @default(0)
+  deliveryFee  Int      @default(0)
+  total        Int
+  deliveryType String   @default("delivery") // "delivery" | "pickup"
+  address      String?
+  landmark     String?
+  latitude     Float?
+  longitude    Float?
+  customerName String?
+  phone        String?
+  deliveryDate String? // "2026-09-20"
+  deliveryTime String? // "14:00 - 16:00"
+  comment      String?
+  paymentType  String   @default("cash") // "cash" | "card"
+  status       String   @default("new") // new | confirmed | delivering | done | canceled
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  userId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@map("orders")
+}
+
+// ---------------------------------------------------------------
+// Storylar (Mini App bosh sahifasidagi doiralar)
+// ---------------------------------------------------------------
+model Story {
+  id        Int      @id @default(autoincrement())
+  titleUz   String
+  titleRu   String
+  textUz    String   @default("")
+  textRu    String   @default("")
+  imageUrl  String   @default("")
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  @@map("stories")
+}
