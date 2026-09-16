@@ -1,4 +1,4 @@
-import { createContext, useContext, useCallback, useEffect, useMemo, useState } from 'react';
+import { createContext, useContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { api } from './api';
 import { getDict } from './i18n';
 import { getTelegramUser, haptic } from './telegram';
@@ -10,17 +10,34 @@ export const useApp = () => useContext(AppContext);
 const LS_LANG = 'sht_lang';
 const LS_ONB = 'sht_onboarded';
 const LS_CART = 'sht_cart';
+const LS_CATALOG = 'sht_catalog_v1';
+
+const EMPTY_CATALOG = { categories: [], products: [], stories: [], shop: null };
+
+/** Keshdagi katalog yaroqlimi (tuzilishi to'g'rimi) */
+function readCachedCatalog() {
+  const cached = storage.get(LS_CATALOG, null);
+  if (!cached || !Array.isArray(cached.products) || !cached.products.length) return null;
+  return { ...EMPTY_CATALOG, ...cached };
+}
 
 export function AppProvider({ children }) {
   const [lang, setLangState] = useState(() => storage.get(LS_LANG, null));
   const [suggestedLang, setSuggestedLang] = useState('uz'); // botda tanlangan til
   const [onboarded, setOnboarded] = useState(() => storage.get(LS_ONB, false));
 
-  const [catalog, setCatalog] = useState({ categories: [], products: [], stories: [], shop: null });
+  // Oxirgi marta ko'rilgan katalog — ilova bir zumda ochilishi uchun.
+  // Yangi ma'lumot orqa fonda yuklanadi va o'z-o'zidan almashadi.
+  // localStorage faqat bir marta o'qiladi (lazy initializer).
+  const cachedRef = useRef(null);
+  if (cachedRef.current === null) cachedRef.current = { value: readCachedCatalog() };
+  const cachedCatalog = cachedRef.current.value;
+
+  const [catalog, setCatalog] = useState(() => cachedCatalog || EMPTY_CATALOG);
   const [user, setUser] = useState(null);
   const [orders, setOrders] = useState([]);
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!cachedCatalog);
   const [error, setError] = useState(null);
 
   const [page, setPage] = useState('home');
@@ -30,36 +47,48 @@ export function AppProvider({ children }) {
   const t = useMemo(() => getDict(lang || 'uz'), [lang]);
 
   // ── Ma'lumotlarni yuklash ────────────────────────────────
-  const load = useCallback(async () => {
-    setLoading(true);
+  // silent=true bo'lsa ekran o'zgarmaydi: eski ma'lumot ko'rinib turadi,
+  // yangisi kelgach jimgina almashadi (stale-while-revalidate).
+  const load = useCallback(async ({ silent = false } = {}) => {
+    if (!silent) setLoading(true);
     setError(null);
+
+    // Ikkala so'rov bir vaqtda ketadi — ketma-ket kutish yo'q.
+    const catalogPromise = api.getCatalog();
+    const mePromise = api.getMe().catch(() => null);
+
     try {
-      const data = await api.getCatalog();
-      setCatalog({
+      const data = await catalogPromise;
+      const next = {
         categories: data.categories || [],
         products: data.products || [],
         stories: data.stories || [],
         shop: data.shop || null,
-      });
-
-      try {
-        const meRes = await api.getMe();
-        setUser(meRes.user);
-        // Botda tanlangan til — til ekranida oldindan belgilanadi
-        if (meRes.user?.language) setSuggestedLang(meRes.user.language);
-      } catch (_) {
-        // Avtorizatsiya bo'lmasa ham katalogni ko'rsatamiz
-      }
+      };
+      setCatalog(next);
+      storage.set(LS_CATALOG, next);
     } catch (err) {
-      setError(err.message);
+      // Keshda ma'lumot bo'lsa — xato ekranini ko'rsatmaymiz,
+      // foydalanuvchi eski katalog bilan ishlayveradi.
+      if (!silent) setError(err.message);
     } finally {
       setLoading(false);
+    }
+
+    // Profil katalogdan mustaqil — kechikib kelsa ham ilovani ushlab turmaydi
+    const meRes = await mePromise;
+    if (meRes?.user) {
+      setUser(meRes.user);
+      // Botda tanlangan til — til ekranida oldindan belgilanadi
+      if (meRes.user.language) setSuggestedLang(meRes.user.language);
     }
   }, []);
 
   useEffect(() => {
-    load();
-  }, [load]);
+    load({ silent: Boolean(cachedCatalog) });
+  }, [load, cachedCatalog]);
+
+  const reload = useCallback(() => load(), [load]);
 
   const loadOrders = useCallback(async () => {
     try {
@@ -178,7 +207,7 @@ export function AppProvider({ children }) {
 
     loading,
     error,
-    reload: load,
+    reload,
 
     page,
     setPage,

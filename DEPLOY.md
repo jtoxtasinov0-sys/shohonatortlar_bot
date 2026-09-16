@@ -10,6 +10,24 @@ Loyiha uch qismdan iborat va ular ikki xizmatga taqsimlanadi:
 
 Ma'lumotlar bazasi allaqachon **Neon** da — uni ko'chirish shart emas.
 
+## ⚡ Tezkor sozlash — shu loyihaning aniq qiymatlari
+
+Loyiha allaqachon deploy qilingan. Bot sekin ochilishi muammosini hal qilish uchun **Render → shohonatortlar-api → Environment** ga shu ikki qiymat qo'shilishi kerak:
+
+| Kalit | Qiymat | Nega |
+|-------|--------|------|
+| `SELF_URL` | `https://shohonatortlar-api.onrender.com` | Servis uxlamaydi + bot webhook rejimiga o'tadi |
+| `WEBAPP_URL` | `https://shohonatortlar-miniapp.vercel.app` | Botdagi «Menyu» tugmasi Mini App'ni ochadi |
+
+Tekshirish: `https://shohonatortlar-api.onrender.com/api/health` →
+```json
+{ "ok": true, "bot": true, "webApp": "https://shohonatortlar-miniapp.vercel.app" }
+```
+
+`"webApp": null` bo'lsa — `WEBAPP_URL` hali qo'shilmagan.
+
+---
+
 > ⚠️ **Tartib muhim.** Avval Render (backend), keyin Vercel (frontend), oxirida ikkalasini bir-biriga ulash. Sababi: frontend build paytida backend manzilini biladi, backend esa Mini App manzilini bilishi kerak.
 
 ---
@@ -64,6 +82,7 @@ Quyidagilarni aynan shunday to'ldiring:
 | `FREE_DELIVERY_FROM` | `300000` |
 | `MIN_ORDER` | `30000` |
 | `WEBAPP_URL` | **Hozircha bo'sh qoldiring** — 3-bosqichda to'ldiramiz |
+| `SELF_URL` | `https://shohonatortlar-api.onrender.com` ← **servisning o'z manzili**, uxlab qolmasligi uchun |
 
 > 🚫 **`PORT` ni QO'SHMANG.** Render uni o'zi beradi. Qo'lda yozsangiz, servis tashqaridan ochilmaydi.
 
@@ -117,13 +136,47 @@ Render'ning bepul tarifi **15 daqiqa harakatsizlikdan keyin servisni uxlatadi**.
 - Bot Telegram'da javob bermay qoladi
 - Keyingi so'rov servisni uyg'otadi, lekin bu **~50 soniya** davom etadi
 
-Uch yechim bor:
+### ✅ Kodga o'rnatilgan yechim: keep-alive
+
+Backend endi o'zini-o'zi har 10 daqiqada "turtib" turadi (`backend/src/index.js` → `startKeepAlive()`), shu bilan birga Neon bazasiga ham yengil so'rov yuboradi. **Ishlashi uchun bitta sozlama kerak:**
+
+| Kalit | Qiymat |
+|-------|--------|
+| `SELF_URL` | Servisning o'z manzili, masalan `https://shohonatortlar-api.onrender.com` |
+
+> Render `RENDER_EXTERNAL_URL` o'zgaruvchisini avtomatik beradi — u bo'lsa `SELF_URL` shart emas. Logda `💓 Keep-alive: har 10 daqiqada ...` chiqsa — ishlayapti.
+
+O'chirish kerak bo'lsa: `KEEP_ALIVE=false`. Interval: `KEEP_ALIVE_MINUTES`.
+
+### 📨 Webhook rejimi (avtomatik yoqiladi)
+
+`SELF_URL` (yoki Render'ning `RENDER_EXTERNAL_URL`) ma'lum bo'lsa, bot **webhook** rejimiga o'zi o'tadi:
+
+| Rejim | Qanday ishlaydi | Uxlagan servis |
+|-------|-----------------|----------------|
+| `polling` (eski) | Bot Telegramdan xabarlarni **o'zi so'rab turadi** | Jarayon to'xtagan — hech narsa so'ramaydi, bot **butunlay jim** |
+| `webhook` (yangi) | Telegram xabarni **serverga o'zi yuboradi** | Aynan shu so'rov servisni **uyg'otadi** |
+
+Ya'ni webhook rejimida bot eng yomon holatda ham tiriladi. Keep-alive esa uyg'onishga umuman hojat qolmasligi uchun.
+
+Logda qaysi rejim ishlayotgani ko'rinadi:
+
+```
+📨 Bot rejimi:          webhook (https://shohonatortlar-api.onrender.com/telegram/webhook)
+```
+
+Majburan eski rejimga qaytarish kerak bo'lsa: `BOT_MODE=polling`.
+
+> ⚠️ Bir vaqtning o'zida **bitta** nusxa ishlashi kerak. Kompyuteringizda ham bot yoqilgan bo'lsa, Render'dagisi bilan to'qnashadi.
+
+### Qo'shimcha variantlar
 
 | Yechim | Narxi | Izoh |
 |--------|-------|------|
-| **Starter tarif** | $7/oy | Hech qachon uxlamaydi. Haqiqiy do'kon uchun **tavsiya etiladi**. |
-| **Tashqi "ping"** | Bepul | [cron-job.org](https://cron-job.org) da har 10 daqiqada `https://shohonatortlar-api.onrender.com/api/health` ga so'rov qo'ying. Bepul tarifdagi 750 soat/oy limitiga sig'adi (24/7 ≈ 730 soat). |
-| **Webhook'ga o'tish** | Bepul | Kod o'zgarishi talab qiladi va sovuq start tufayli birinchi xabarlar yo'qolishi mumkin. |
+| **Starter tarif** | $7/oy | Hech qachon uxlamaydi. Haqiqiy do'kon uchun **eng ishonchlisi**. |
+| **Tashqi "ping"** | Bepul | Keep-alive ustiga qo'shimcha kafolat: [cron-job.org](https://cron-job.org) da har 10 daqiqada `/api/health` ga so'rov qo'ying. Servis deploy paytida qayta ishga tushsa ham uyg'otadi. |
+
+> 💡 Bepul tarifdagi 750 soat/oy limiti 24/7 ishlashga (≈730 soat) yetadi.
 
 ---
 
@@ -221,6 +274,9 @@ Telegram'da [@BotFather](https://t.me/BotFather):
 
 **Render: `Can't reach database server`**
 → `DATABASE_URL` va `DIRECT_URL` to'g'ri ko'chirilganini, oxirida `?sslmode=require` borligini tekshiring.
+
+**Bot ikki marta javob beryapti / «Conflict» xatosi**
+→ Bot ikkita joyda ishlayapti (kompyuter + Render). Bittasini o'chiring.
 
 **Render: servis ishga tushdi, lekin bot jim**
 → `/api/health` da `"bot": false` bo'lsa, `BOT_TOKEN` noto'g'ri. `true` bo'lsa-yu bot jim bo'lsa — servis uxlagan (yuqoridagi ogohlantirishga qarang).

@@ -5,6 +5,7 @@ export const dict = {
   uz: {
     currency: "so'm",
     loading: 'Yuklanmoqda...',
+    wakingUp: "Server uyg'onmoqda, biroz kuting...",
     errorTitle: 'Xatolik yuz berdi',
     retry: 'Qayta urinish',
     close: 'Yopish',
@@ -153,6 +154,7 @@ export const dict = {
   ru: {
     currency: 'сум',
     loading: 'Загрузка...',
+    wakingUp: 'Сервер просыпается, подождите немного...',
     errorTitle: 'Произошла ошибка',
     retry: 'Повторить',
     close: 'Закрыть',

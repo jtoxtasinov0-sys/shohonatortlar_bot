@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useApp } from './store';
-import { initTelegram } from './telegram';
 
 import LanguageScreen from './components/LanguageScreen';
 import Onboarding from './components/Onboarding';
 import BottomNav from './components/BottomNav';
 import ProductSheet from './components/ProductSheet';
+import Skeleton from './components/Skeleton';
 
 import Home from './pages/Home';
 import Catalog from './pages/Catalog';
@@ -19,22 +19,14 @@ export default function App() {
   const [product, setProduct] = useState(null);
   const [activeCategory, setActiveCategory] = useState(null);
 
-  useEffect(() => {
-    initTelegram();
-  }, []);
-
   // Sahifa almashganda tepaga qaytish
   useEffect(() => {
     window.scrollTo({ top: 0 });
   }, [page]);
 
-  if (loading) {
-    return (
-      <div className="loader">
-        <div className="spinner" />
-      </div>
-    );
-  }
+  // Birinchi yuklanish: bo'sh spinner emas, sahifa skeletini ko'rsatamiz.
+  // Keshdan ochilganda bu ekran umuman ko'rinmaydi.
+  if (loading) return <Skeleton t={t} />;
 
   if (error) {
     return (

@@ -36,6 +36,17 @@ function phoneKeyboard(lang) {
     .oneTime();
 }
 
+/**
+ * Telegramga darhol "yozmoqda..." belgisini yuboradi.
+ * Bazadan javob kutilayotgan paytda foydalanuvchi bot tirikligini ko'radi.
+ * Kutmaymiz — javob berishni sekinlashtirmasligi kerak.
+ */
+function typing(ctx) {
+  try {
+    ctx.sendChatAction('typing').catch(() => {});
+  } catch (_) {}
+}
+
 /** Joriy foydalanuvchini bazadan olish / yaratish */
 async function ensureUser(ctx) {
   return UserModel.upsertFromTelegram(ctx.from);
@@ -45,6 +56,7 @@ async function ensureUser(ctx) {
 // /start
 // ---------------------------------------------------------------
 async function handleStart(ctx) {
+  typing(ctx);
   const user = await ensureUser(ctx);
 
   if (!user.phone) {
@@ -84,6 +96,7 @@ async function handleLanguage(ctx) {
 
 /** /language yoki "🌐 Til / Язык" */
 async function handleLanguageMenu(ctx) {
+  typing(ctx);
   const user = await ensureUser(ctx);
   await ctx.reply(t(user.language).chooseLanguage, languageKeyboard());
 }
@@ -92,6 +105,7 @@ async function handleLanguageMenu(ctx) {
 // Kontakt (telefon raqam) qabul qilish
 // ---------------------------------------------------------------
 async function handleContact(ctx) {
+  typing(ctx);
   const user = await ensureUser(ctx);
   const contact = ctx.message.contact;
 
@@ -113,6 +127,7 @@ async function handleContact(ctx) {
 // "🍰 Menyu va buyurtma" (WEBAPP_URL sozlanmagan holat uchun)
 // ---------------------------------------------------------------
 async function handleOrderButton(ctx) {
+  typing(ctx);
   const user = await ensureUser(ctx);
   const texts = t(user.language);
 
@@ -127,6 +142,7 @@ async function handleOrderButton(ctx) {
 // "📜 Buyurtmalarim"
 // ---------------------------------------------------------------
 async function handleMyOrders(ctx) {
+  typing(ctx);
   const user = await ensureUser(ctx);
   const texts = t(user.language);
   const orders = await OrderModel.listByUser(user.id, 5);

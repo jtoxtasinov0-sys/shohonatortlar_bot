@@ -5,6 +5,7 @@
 const express = require('express');
 const controller = require('../controllers/adminController');
 const { adminAuth } = require('../middlewares/auth.middleware');
+const { invalidateCatalog } = require('../controllers/cartController');
 
 const router = express.Router();
 
@@ -13,6 +14,17 @@ router.post('/login', controller.login);
 
 // Quyidagilarning hammasi token talab qiladi
 router.use(adminAuth);
+
+// Katalogga tegadigan har qanday o'zgarish (POST/PUT/DELETE) keshni tozalaydi,
+// shunda Mini App yangi ma'lumotni darhol ko'radi.
+router.use((req, res, next) => {
+  if (req.method !== 'GET') {
+    res.on('finish', () => {
+      if (res.statusCode < 400) invalidateCatalog();
+    });
+  }
+  next();
+});
 
 router.get('/stats', controller.getStats);
 

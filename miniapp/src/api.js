@@ -4,6 +4,28 @@
  */
 const BASE = import.meta.env.VITE_API_URL || '/api';
 
+/**
+ * Backend boshqa domenda bo'lsa (Render), DNS + TLS ulanishini
+ * oldindan ochib qo'yamiz. Birinchi so'rov ~200-500 ms tez bo'ladi.
+ */
+function preconnect() {
+  try {
+    if (!/^https?:\/\//i.test(BASE)) return;
+    const origin = new URL(BASE).origin;
+    if (origin === window.location.origin) return;
+
+    for (const rel of ['preconnect', 'dns-prefetch']) {
+      const link = document.createElement('link');
+      link.rel = rel;
+      link.href = origin;
+      if (rel === 'preconnect') link.crossOrigin = '';
+      document.head.appendChild(link);
+    }
+  } catch (_) {}
+}
+
+if (typeof document !== 'undefined') preconnect();
+
 function headers() {
   const h = { 'Content-Type': 'application/json' };
   const initData = window.Telegram?.WebApp?.initData;

@@ -8,6 +8,7 @@ const ProductModel = require('../models/Product');
 const OrderModel = require('../models/Order');
 const UserModel = require('../models/User');
 const StoryModel = require('../models/Story');
+const cache = require('../utils/cache');
 const { sendMessage } = require('../core/bot');
 const { t } = require('../utils/i18n');
 const { formatPrice, formatOrderNumber, itemsToText, escapeHtml, formatDate } = require('../utils/helpers');
@@ -15,31 +16,50 @@ const { formatPrice, formatOrderNumber, itemsToText, escapeHtml, formatDate } = 
 /** Narxni 1000 so'mgacha yaxlitlash */
 const roundPrice = (value) => Math.round(value / 1000) * 1000;
 
-/** GET /api/client/catalog — kategoriyalar + mahsulotlar + storylar */
+/** Katalog qancha vaqt keshda yashaydi (ms). Admin panel o'zgartirsa — darrov tozalanadi. */
+const CATALOG_TTL = 5 * 60 * 1000;
+const CATALOG_KEY = 'catalog';
+
+/** Katalog o'zgarganda keshni tozalash (adminController chaqiradi) */
+function invalidateCatalog() {
+  cache.invalidate(CATALOG_KEY);
+}
+
+/** Katalog ma'lumotlarini bazadan yig'ish */
+async function buildCatalog() {
+  const [categories, products, stories] = await Promise.all([
+    CategoryModel.listActive(),
+    ProductModel.listActive(),
+    StoryModel.listActive(),
+  ]);
+
+  return {
+    ok: true,
+    categories,
+    products,
+    stories,
+    shop: {
+      name: config.shop.name,
+      phone: config.shop.phone,
+      address: config.shop.address,
+      workTime: config.shop.workTime,
+      instagram: config.shop.instagram,
+      deliveryFee: config.shop.deliveryFee,
+      freeDeliveryFrom: config.shop.freeDeliveryFrom,
+      minOrder: config.shop.minOrder,
+    },
+  };
+}
+
+/** GET /api/client/catalog — kategoriyalar + mahsulotlar + storylar (keshlanadi) */
 async function getCatalog(req, res, next) {
   try {
-    const [categories, products, stories] = await Promise.all([
-      CategoryModel.listActive(),
-      ProductModel.listActive(),
-      StoryModel.listActive(),
-    ]);
+    const payload = await cache.remember(CATALOG_KEY, CATALOG_TTL, buildCatalog);
 
-    res.json({
-      ok: true,
-      categories,
-      products,
-      stories,
-      shop: {
-        name: config.shop.name,
-        phone: config.shop.phone,
-        address: config.shop.address,
-        workTime: config.shop.workTime,
-        instagram: config.shop.instagram,
-        deliveryFee: config.shop.deliveryFee,
-        freeDeliveryFrom: config.shop.freeDeliveryFrom,
-        minOrder: config.shop.minOrder,
-      },
-    });
+    // Brauzer keshi: 60 soniya yangi, keyin 5 daqiqa davomida eskisini
+    // ko'rsatib turib, orqa fonda yangilaydi — Mini App bir zumda ochiladi.
+    res.set('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
+    res.json(payload);
   } catch (err) {
     next(err);
   }
@@ -221,4 +241,4 @@ async function createOrder(req, res, next) {
   }
 }
 
-module.exports = { getCatalog, getMe, updateMe, getMyOrders, createOrder };
+module.exports = { invalidateCatalog, getCatalog, getMe, updateMe, getMyOrders, createOrder };

@@ -18,6 +18,7 @@
   },
   "dependencies": {
     "@prisma/client": "^6.2.1",
+    "compression": "^1.8.2",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
@@ -31,5 +32,8 @@
     "prisma@6.19.3": true,
     "@prisma/client@6.19.3": true,
     "@prisma/engines@6.19.3": true
+  },
+  "engines": {
+    "node": ">=18"
   }
 }
