@@ -233,6 +233,16 @@ Environment Variable — **e'tibor bering, oxiri boshqacha**:
 
 > 💡 `VITE_API_URL` ni keyin o'zgartirsangiz, **qayta deploy qilish shart** — Vite bu qiymatni build paytida kodga singdiradi. Vercel → Deployments → ⋯ → **Redeploy**.
 
+> ⚠️ **GitHub'ga push qilinganda Vercel'da `npm error ENOENT ... /vercel/path0/package.json` xatosi chiqsa** —
+> loyihaning **Root Directory** si ko'rsatilmagan, ya'ni Vercel repo ildizidan build qilmoqchi bo'lyapti
+> (u yerda `package.json` yo'q). Tuzatish: Vercel → loyiha → **Settings** → **Build & Deployment** →
+> **Root Directory** → `miniapp` (admin loyihasi uchun `admin`) → **Save** → **Redeploy**.
+>
+> Vaqtinchalik yechim — shu papkaning ichidan qo'lda deploy qilish:
+> ```bash
+> cd miniapp && vercel --prod
+> ```
+
 ---
 
 ## 3️⃣ Ulash
