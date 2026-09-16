@@ -12,12 +12,13 @@ Ma'lumotlar bazasi allaqachon **Neon** da — uni ko'chirish shart emas.
 
 ## ⚡ Tezkor sozlash — shu loyihaning aniq qiymatlari
 
-Loyiha allaqachon deploy qilingan. Bot sekin ochilishi muammosini hal qilish uchun **Render → shohonatortlar-api → Environment** ga shu ikki qiymat qo'shilishi kerak:
+Loyiha deploy qilingan va ishlayapti. **Render → shohonatortlar-api → Environment** da yetishmayotgan yagona qiymat:
 
 | Kalit | Qiymat | Nega |
 |-------|--------|------|
-| `SELF_URL` | `https://shohonatortlar-api.onrender.com` | Servis uxlamaydi + bot webhook rejimiga o'tadi |
-| `WEBAPP_URL` | `https://shohonatortlar-miniapp.vercel.app` | Botdagi «Menyu» tugmasi Mini App'ni ochadi |
+| `WEBAPP_URL` | `https://shohonatortlar-miniapp.vercel.app` | Botdagi «🍰 Menyu va buyurtma» tugmasi Mini App'ni ochadi |
+
+> ✅ `SELF_URL` **Render'da kerak emas** — Render `RENDER_EXTERNAL_URL` ni avtomatik beradi, keep-alive va webhook shundan ishlaydi. `SELF_URL` faqat boshqa xostingda (yoki mahalliy tunnel bilan) kerak bo'ladi.
 
 Tekshirish: `https://shohonatortlar-api.onrender.com/api/health` →
 ```json
@@ -25,6 +26,12 @@ Tekshirish: `https://shohonatortlar-api.onrender.com/api/health` →
 ```
 
 `"webApp": null` bo'lsa — `WEBAPP_URL` hali qo'shilmagan.
+
+Bot rejimini tekshirish (webhook ishlayotganini ko'rsatadi):
+```
+https://api.telegram.org/bot<BOT_TOKEN>/getWebhookInfo
+```
+`"url": "https://shohonatortlar-api.onrender.com/telegram/webhook"` va `last_error_message` yo'qligi — hammasi joyida.
 
 ---
 
@@ -82,7 +89,7 @@ Quyidagilarni aynan shunday to'ldiring:
 | `FREE_DELIVERY_FROM` | `300000` |
 | `MIN_ORDER` | `30000` |
 | `WEBAPP_URL` | **Hozircha bo'sh qoldiring** — 3-bosqichda to'ldiramiz |
-| `SELF_URL` | `https://shohonatortlar-api.onrender.com` ← **servisning o'z manzili**, uxlab qolmasligi uchun |
+| `SELF_URL` | **Render'da shart emas** — `RENDER_EXTERNAL_URL` avtomatik beriladi. Boshqa xostingda servisning o'z manzilini yozing. |
 
 > 🚫 **`PORT` ni QO'SHMANG.** Render uni o'zi beradi. Qo'lda yozsangiz, servis tashqaridan ochilmaydi.
 
@@ -138,7 +145,7 @@ Render'ning bepul tarifi **15 daqiqa harakatsizlikdan keyin servisni uxlatadi**.
 
 ### ✅ Kodga o'rnatilgan yechim: keep-alive
 
-Backend endi o'zini-o'zi har 10 daqiqada "turtib" turadi (`backend/src/index.js` → `startKeepAlive()`), shu bilan birga Neon bazasiga ham yengil so'rov yuboradi. **Ishlashi uchun bitta sozlama kerak:**
+Backend o'zini-o'zi har 10 daqiqada "turtib" turadi (`backend/src/index.js` → `startKeepAlive()`), shu bilan birga Neon bazasiga ham yengil so'rov yuboradi. **Render'da qo'shimcha sozlash kerak emas** — `RENDER_EXTERNAL_URL` avtomatik ishlatiladi. Boshqa xostingda:
 
 | Kalit | Qiymat |
 |-------|--------|
