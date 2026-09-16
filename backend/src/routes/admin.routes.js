@@ -33,6 +33,9 @@ router.get('/orders', controller.getOrders);
 router.patch('/orders/:id/status', controller.updateOrderStatus);
 router.delete('/orders/:id', controller.deleteOrder);
 
+// Rasm yuklash (mahsulot va storylar uchun)
+router.post('/upload', controller.uploadImage);
+
 // Mahsulotlar
 router.get('/products', controller.getProducts);
 router.post('/products', controller.createProduct);

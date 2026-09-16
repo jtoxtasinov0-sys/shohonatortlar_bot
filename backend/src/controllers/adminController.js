@@ -8,6 +8,7 @@ const CategoryModel = require('../models/Category');
 const OrderModel = require('../models/Order');
 const StoryModel = require('../models/Story');
 const UserModel = require('../models/User');
+const ImageModel = require('../models/Image');
 const { sendMessage } = require('../core/bot');
 const { t } = require('../utils/i18n');
 const { formatOrderNumber } = require('../utils/helpers');
@@ -300,6 +301,57 @@ async function deleteStory(req, res, next) {
 }
 
 // ---------------------------------------------------------------
+// Rasm yuklash (telefon galereyasidan yoki kameradan)
+// ---------------------------------------------------------------
+/** "data:image/jpeg;base64,AAA..." satrini baytlarga aylantiradi */
+function parseDataUrl(value) {
+  const match = /^data:(image\/(?:jpeg|jpg|png|webp));base64,([A-Za-z0-9+/=\s]+)$/i.exec(
+    String(value || '').trim()
+  );
+  if (!match) return null;
+
+  const buffer = Buffer.from(match[2], 'base64');
+  if (!buffer.length) return null;
+
+  return {
+    mimeType: match[1].toLowerCase() === 'image/jpg' ? 'image/jpeg' : match[1].toLowerCase(),
+    buffer,
+  };
+}
+
+/**
+ * POST /api/admin/upload
+ * Admin panel rasmni (galereyadan tanlangan faylni) shu yerga yuboradi,
+ * javobida esa mahsulotga yoziladigan manzil qaytadi.
+ */
+async function uploadImage(req, res, next) {
+  try {
+    const parsed = parseDataUrl(req.body && req.body.dataUrl);
+    if (!parsed) {
+      return res.status(400).json({
+        ok: false,
+        error: 'Rasm formati mos emas — JPG, PNG yoki WebP yuboring',
+      });
+    }
+
+    const MAX_BYTES = 5 * 1024 * 1024;
+    if (parsed.buffer.length > MAX_BYTES) {
+      return res.status(413).json({ ok: false, error: "Rasm juda katta (5 MB gacha bo'lsin)" });
+    }
+
+    const { id } = await ImageModel.save(parsed.buffer, {
+      mimeType: parsed.mimeType,
+      width: toInt(req.body && req.body.width, 0),
+      height: toInt(req.body && req.body.height, 0),
+    });
+
+    res.json({ ok: true, id, url: ImageModel.urlFor(id) });
+  } catch (err) {
+    next(err);
+  }
+}
+
+// ---------------------------------------------------------------
 // Mijozlar
 // ---------------------------------------------------------------
 async function getUsers(req, res, next) {
@@ -329,4 +381,5 @@ module.exports = {
   updateStory,
   deleteStory,
   getUsers,
+  uploadImage,
 };

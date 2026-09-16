@@ -5,6 +5,26 @@
 const BASE = import.meta.env.VITE_API_URL || '/api';
 
 /**
+ * Backend'ning asosiy manzili (masalan "https://...onrender.com").
+ * Mahsulot rasmlari bazada saqlanadi va "/api/images/<id>.jpg" ko'rinishida
+ * keladi — ularni shu manzilga ulab to'liq havolaga aylantiramiz.
+ */
+const ORIGIN = (() => {
+  try {
+    return new URL(BASE, window.location.origin).origin;
+  } catch (_) {
+    return '';
+  }
+})();
+
+/** Rasm havolasini to'liq manzilga aylantiradi */
+export function mediaUrl(url) {
+  if (!url) return '';
+  if (/^(https?:|data:|blob:)/i.test(url)) return url;
+  return ORIGIN + (url.startsWith('/') ? url : `/${url}`);
+}
+
+/**
  * Backend boshqa domenda bo'lsa (Render), DNS + TLS ulanishini
  * oldindan ochib qo'yamiz. Birinchi so'rov ~200-500 ms tez bo'ladi.
  */

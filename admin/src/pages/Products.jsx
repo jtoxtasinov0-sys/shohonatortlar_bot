@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api';
+import ImageField from '../components/ImageField';
 import Modal from '../components/Modal';
 import Thumb from '../components/Thumb';
 import { DEFAULT_CAKE_OPTIONS, formatPrice } from '../utils';
@@ -296,15 +297,11 @@ export default function Products({ onToast }) {
             </div>
           </div>
 
-          <div className="field">
-            <label>Rasm havolasi (URL)</label>
-            <input
-              value={form.imageUrl}
-              placeholder="https://..."
-              onChange={(e) => set('imageUrl', e.target.value)}
-            />
-            <div className="hint">Rasmni internetga yuklab, havolasini shu yerga qo'ying</div>
-          </div>
+          <ImageField
+            label="Mahsulot rasmi"
+            value={form.imageUrl}
+            onChange={(url) => set('imageUrl', url)}
+          />
 
           <div className="grid-2">
             <div className="field">

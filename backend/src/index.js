@@ -13,6 +13,7 @@ const { bot } = require('./core/bot');
 const registerBotHandlers = require('./routes/bot.routes');
 const clientRoutes = require('./routes/client.routes');
 const adminRoutes = require('./routes/admin.routes');
+const imageRoutes = require('./routes/image.routes');
 
 const app = express();
 
@@ -20,7 +21,9 @@ const app = express();
 // sekin mobil internetda Mini App sezilarli tez ochiladi.
 app.use(compression());
 app.use(cors({ origin: true, credentials: true }));
-app.use(express.json({ limit: '2mb' }));
+// Admin paneldan yuklanadigan rasm base64 ko'rinishida keladi —
+// shuning uchun so'rov hajmi chegarasi kattaroq.
+app.use(express.json({ limit: '8mb' }));
 app.use(express.urlencoded({ extended: true }));
 
 // Oddiy log
@@ -52,6 +55,8 @@ app.use(telegramWebhook);
 
 app.use('/api/client', clientRoutes);
 app.use('/api/admin', adminRoutes);
+// Mahsulot rasmlari — ochiq (Mini App ham, admin panel ham shu yerdan oladi)
+app.use('/api/images', imageRoutes);
 
 // 404
 app.use((req, res) => {
@@ -137,6 +142,31 @@ async function warmUp() {
   } catch (err) {
     console.error('⚠️  Katalogni oldindan yuklab bo\'lmadi:', err.message);
   }
+}
+
+/**
+ * Ishlatilmayotgan rasmlarni tozalash.
+ * Admin panelda tanlangan, biroq mahsulotga biriktirilmagan rasmlar
+ * bazada qolib ketmasligi uchun sutkada bir marta tekshiriladi.
+ */
+let cleanupTimer = null;
+
+function startImageCleanup() {
+  const ImageModel = require('./models/Image');
+  const DAY = 24 * 60 * 60 * 1000;
+
+  const run = async () => {
+    try {
+      const removed = await ImageModel.cleanupOrphans(24);
+      if (removed > 0) console.log(`🧹 ${removed} ta ishlatilmagan rasm o'chirildi`);
+    } catch (err) {
+      console.error('⚠️  Rasm tozalash:', err.message);
+    }
+  };
+
+  // Ishga tushgandan 5 daqiqa keyin — startni sekinlashtirmaslik uchun
+  setTimeout(run, 5 * 60 * 1000);
+  cleanupTimer = setInterval(run, DAY);
 }
 
 // ---------------------------------------------------------------
@@ -228,6 +258,7 @@ async function start() {
 
   // Bular serverni kutib turmaydi — parallel ishga tushadi
   startKeepAlive();
+  startImageCleanup();
   warmUp();
   startBot();
 }
@@ -235,6 +266,7 @@ async function start() {
 async function shutdown(signal) {
   console.log(`\n${signal} — to'xtatilmoqda...`);
   if (keepAliveTimer) clearInterval(keepAliveTimer);
+  if (cleanupTimer) clearInterval(cleanupTimer);
   try {
     if (bot && config.botMode === 'polling') bot.stop(signal);
   } catch (_) {}

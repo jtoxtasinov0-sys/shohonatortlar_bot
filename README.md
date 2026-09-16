@@ -260,12 +260,27 @@ Endi botning chap pastidagi doimiy tugma orqali ham Mini App ochiladi.
 |--------|--------------------|
 | **Boshqaruv** | Bugungi buyurtmalar, tushum, mijozlar soni |
 | **Buyurtmalar** | Ro'yxat, filtr, qidiruv, holatni o'zgartirish (mijozga bot orqali avtomatik xabar boradi), batafsil ko'rish, o'chirish |
-| **Mahsulotlar** | Qo'shish / tahrirlash / o'chirish, narx, chegirma, rasm, tarkib, vazn variantlari, mashhur belgisi |
+| **Mahsulotlar** | Qo'shish / tahrirlash / o'chirish, narx, chegirma, rasm (telefon galereyasidan), tarkib, vazn variantlari, mashhur belgisi |
 | **Kategoriyalar** | Qo'shish / tahrirlash / o'chirish |
 | **Storylar** | Mini App bosh sahifasidagi aksiya storylari |
 | **Mijozlar** | Botga obuna bo'lganlar ro'yxati |
 
 Buyurtmalar sahifasi har **10 soniyada** avtomatik yangilanadi.
+
+### 📷 Mahsulot rasmini qo'shish
+
+Admin panel → **Mahsulotlar** → ✏️ (yoki «+ Yangi mahsulot») → **Mahsulot rasmi**:
+
+1. **📷 Galereyadan tanlash** — telefon galereyasidan yoki kameradan surat oling
+   (kompyuterda faylni to'g'ridan-to'g'ri maydonga tashlash ham mumkin);
+2. rasm brauzerning o'zida tayyorlanadi: to'g'ri buriladi, **kvadrat (1:1) kadr**ga
+   kesiladi, yorug'lik va ranglari kuchaytiriladi, 1200×1200 JPEG'ga siqiladi;
+3. kadr noto'g'ri tushsa — **«Kadr»** slayderi bilan yuqoriga/pastga suriladi;
+4. **🔗 Havola** tugmasi orqali internetdagi rasm manzilini ham qo'yish mumkin.
+
+Rasmlar bazada (`images` jadvali) saqlanadi va `/api/images/<id>.jpg` orqali
+beriladi — Render'da deploy qilinganda ham yo'qolmaydi. Mahsulotga biriktirilmagan
+rasmlar bir kundan keyin avtomatik tozalanadi.
 
 ---
 
@@ -287,7 +302,9 @@ Buyurtmalar sahifasi har **10 soniyada** avtomatik yangilanadi.
 → Parol: `backend/.env` dagi `ADMIN_PASSWORD` qiymati.
 
 **Rasmlar ko'rinmayapti**
-→ Seed'dagi rasmlar internetdan olinadi. O'z rasmlaringizni admin panel → Mahsulotlar → ✏️ → «Rasm havolasi» orqali qo'ying.
+→ Rasmlar bazadan (`/api/images/...`) olinadi — backend ishlab turganini tekshiring.
+Baza bo'sh bo'lsa `npm run db:seed` ni bajaring. Yangi rasm qo'shish: admin panel →
+Mahsulotlar → ✏️ → «📷 Galereyadan tanlash».
 
 **Port band (`EADDRINUSE`)**
 → Eski jarayonni yoping: `taskkill /F /IM node.exe`

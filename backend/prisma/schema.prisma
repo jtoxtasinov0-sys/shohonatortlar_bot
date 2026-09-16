@@ -130,3 +130,22 @@ model Story {
 
   @@map("stories")
 }
+
+// ---------------------------------------------------------------
+// Rasmlar (admin panelidan yuklanganlari va boshlang'ich rasmlar)
+//
+// Render'ning bepul tarifida disk vaqtinchalik — har deploy'da
+// tozalanadi. Shuning uchun rasmlar bazada saqlanadi va
+// /api/images/<id>.jpg manzili orqali beriladi.
+// ---------------------------------------------------------------
+model Image {
+  id        String   @id // fayl mazmunining sha256 xesh boshlanishi
+  mimeType  String   @default("image/jpeg")
+  width     Int      @default(0)
+  height    Int      @default(0)
+  size      Int      @default(0)
+  data      Bytes
+  createdAt DateTime @default(now())
+
+  @@map("images")
+}

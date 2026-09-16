@@ -2,6 +2,25 @@
 const BASE = import.meta.env.VITE_API_URL || '/api/admin';
 const LS_TOKEN = 'sht_admin_token';
 
+/**
+ * Backend'ning asosiy manzili. Yuklangan rasmlar bazada saqlanadi va
+ * "/api/images/<id>.jpg" ko'rinishida keladi — to'liq havola shu yerdan yasaladi.
+ */
+const ORIGIN = (() => {
+  try {
+    return new URL(BASE, window.location.origin).origin;
+  } catch (_) {
+    return '';
+  }
+})();
+
+/** Rasm havolasini to'liq manzilga aylantiradi */
+export function mediaUrl(url) {
+  if (!url) return '';
+  if (/^(https?:|data:|blob:)/i.test(url)) return url;
+  return ORIGIN + (url.startsWith('/') ? url : `/${url}`);
+}
+
 export const auth = {
   get: () => localStorage.getItem(LS_TOKEN) || '',
   set: (token) => localStorage.setItem(LS_TOKEN, token),
@@ -38,6 +57,9 @@ export const api = {
   orders: (params = '') => request(`/orders${params}`),
   setOrderStatus: (id, status) => request(`/orders/${id}/status`, { method: 'PATCH', body: { status } }),
   deleteOrder: (id) => request(`/orders/${id}`, { method: 'DELETE' }),
+
+  /** Rasmni bazaga yuklaydi, javobida { url } qaytadi */
+  upload: (body) => request('/upload', { method: 'POST', body }),
 
   products: () => request('/products'),
   createProduct: (body) => request('/products', { method: 'POST', body }),

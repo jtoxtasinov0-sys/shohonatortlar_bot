@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api';
+import ImageField from '../components/ImageField';
 import Modal from '../components/Modal';
 import Thumb from '../components/Thumb';
 
@@ -176,14 +177,11 @@ export default function Stories({ onToast }) {
             </div>
           </div>
 
-          <div className="field">
-            <label>Rasm havolasi (URL)</label>
-            <input
-              value={form.imageUrl}
-              placeholder="https://..."
-              onChange={(e) => set('imageUrl', e.target.value)}
-            />
-          </div>
+          <ImageField
+            label="Story rasmi"
+            value={form.imageUrl}
+            onChange={(url) => set('imageUrl', url)}
+          />
 
           <div className="grid-2">
             <div className="field">
