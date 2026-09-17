@@ -231,6 +231,16 @@ Environment Variable — **e'tibor bering, oxiri boshqacha**:
 
 > ⚠️ Ikkala manzil bir xil emas: Mini App uchun `/api`, admin uchun `/api/admin`. Adashtirsangiz, panel ishlamaydi.
 
+### 2.3. Himoyani o'chirish — **majburiy qadam**
+
+Vercel yangi loyihalarni avtomatik **Deployment Protection** bilan yopadi: saytga faqat
+Vercel akkauntiga kirgan odam (ya'ni siz) kira oladi. Har ikkala loyihada ham o'chiring:
+
+**Settings** → **Deployment Protection** → **Vercel Authentication** → **Disabled** → **Save** → **Redeploy**.
+
+Tekshirish: havolani **yashirin (Incognito) oynada** oching. Batafsil: pastdagi
+[«Sayt menda ochiladi, mijozimda ochilmaydi»](#-sayt-menda-ochiladi-mijozimda-ochilmaydi) bo'limi.
+
 > 💡 `VITE_API_URL` ni keyin o'zgartirsangiz, **qayta deploy qilish shart** — Vite bu qiymatni build paytida kodga singdiradi. Vercel → Deployments → ⋯ → **Redeploy**.
 
 > ⚠️ **GitHub'ga push qilinganda Vercel'da `npm error ENOENT ... /vercel/path0/package.json` xatosi chiqsa** —
@@ -272,6 +282,8 @@ Telegram'da [@BotFather](https://t.me/BotFather):
 - [ ] Test buyurtma o'tmoqda
 - [ ] Admin panel ochilib, parol bilan kirmoqda
 - [ ] Buyurtma admin panelda ko'rinmoqda
+- [ ] **Yashirin (Incognito) oynada** admin panel va Mini App ochilmoqda — ya'ni
+      Vercel himoyasi o'chirilgan va havola begona odamlarda ham ishlaydi
 
 ---
 
@@ -281,6 +293,59 @@ Telegram'da [@BotFather](https://t.me/BotFather):
 - [ ] `ADMIN_PASSWORD` kuchli (do'kon nomiga o'xshamagan)
 - [ ] `backend/.env` GitHub'ga tushmagan (`git status` toza)
 - [ ] Admin panel endi internetda ochiq — manzilini tarqatmang
+
+---
+
+## 🔓 «Sayt menda ochiladi, mijozimda ochilmaydi»
+
+Bu Vercel'ning **Deployment Protection** sozlamasi. U yangi loyihalarda **avtomatik yoqiq**
+bo'ladi va saytga faqat **Vercel akkauntiga kirgan** odamni qo'yadi.
+
+Shuning uchun siz bemalol kirasiz (brauzeringiz Vercel'ga login qilgan), begona odam esa
+sayt o'rniga Vercel'ning «Log in» sahifasini yoki `401 / Authentication Required` xatosini ko'radi.
+
+> 🔎 **Tez tekshirish:** havolani brauzerning **yashirin (Incognito) oynasida** oching.
+> Vercel login sahifasi chiqsa — sabab aynan shu. Admin panelning pushti «Parol» oynasi
+> chiqsa — sabab boshqa, pastdagi ikkinchi bo'limga qarang.
+
+### Yechim — himoyani o'chirish
+
+1. [vercel.com](https://vercel.com) → **shohonatortlar-admin** loyihasini oching.
+2. Yuqoridagi **Settings** → chap menyudan **Deployment Protection**.
+3. **Vercel Authentication** → **Disabled** (o'chirilgan) qilib qo'ying → **Save**.
+4. Shu sahifadagi **Password Protection** ham yoqiq bo'lsa, uni ham o'chiring → **Save**.
+5. **Deployments** → eng yuqoridagi deploy → ⋯ → **Redeploy** (sozlama darrov ishlashi uchun).
+
+Shundan keyin `https://shohonatortlar-admin.vercel.app/` hammada ochiladi.
+
+> ⚠️ Bu sozlama **har bir loyiha uchun alohida**. Mini App ham begonalarda ochilmasa
+> (`shohonatortlar-miniapp`), o'sha loyihada ham xuddi shu qadamlarni bajaring.
+> Telegram Mini App ayniqsa muhim: Telegram brauzeri hech qachon Vercel'ga login qilmagan.
+
+> 🔒 **Xavfsizlik haqida.** Himoya o'chgach, admin panel manzili internetda ochiq bo'ladi —
+> uni faqat parol qo'riqlaydi. Shuning uchun Render'dagi `ADMIN_PASSWORD` kuchli bo'lsin
+> va havolani keraksiz odamlarga tarqatmang.
+
+---
+
+## 🔑 «Sahifa ochilyapti, lekin parol bilan kira olmayapti»
+
+Bu boshqa muammo: sayt yuklanyapti, ammo **backend bilan aloqa yo'q**. Sizda ishlayotgandek
+ko'rinishi mumkin, chunki brauzeringizda eski kirish tokeni saqlanib qolgan va siz parol
+oynasini umuman ko'rmayapsiz.
+
+Parol oynasidagi xabarga qarang:
+
+| Ekranda nima yozilgan | Sabab | Nima qilish |
+|---|---|---|
+| «Server manzili sozlanmagan» | Vercel'da `VITE_API_URL` yo'q | Settings → Environment Variables → `VITE_API_URL` = `https://shohonatortlar-api.onrender.com/api/admin` → **Redeploy** |
+| «Backend manzili noto'g'ri: ... sayt sahifasi qaytdi» | `VITE_API_URL` xato yozilgan | Manzil oxiri aynan `/api/admin` ekanini tekshiring → **Redeploy** |
+| «Server uyqudan uyg'onmoqda...» | Render bepul tarifi servisni uxlatgan | 1 daqiqa kuting — panel o'zi kirib ketadi |
+| «Serverga ulanib bo'lmadi» | Render servisi o'chgan/yiqilgan | Render → **Logs** ni tekshiring |
+| «Parol noto'g'ri» | Parol mos emas | Render → Environment → `ADMIN_PASSWORD` bilan solishtiring |
+
+> 💡 O'zingizda ham begona odamdagidek tekshirish uchun: yashirin oynada oching yoki
+> brauzer konsolida (F12) `localStorage.clear()` yozib, sahifani yangilang.
 
 ---
 
